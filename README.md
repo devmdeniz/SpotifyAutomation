@@ -47,6 +47,7 @@ pip install -r requirements.txt
 `bash
 cp .env.example .env
 `
+
 6. Fill in your Spotify credentials in `.env`:
 
 `bash
