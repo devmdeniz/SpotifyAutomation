@@ -34,7 +34,7 @@ npm install
 
 ### Install Python dependencies
 ```bash
-pip install
+pip install -r requirements.txt
 ```
 
 ### Step 3: Configure Spotify API
