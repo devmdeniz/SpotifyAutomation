@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Ses Tespiti Eklentisi",
+    "description": "Chrome'dan ses çalınıp çalınmadığını tespit eder.",
+    "version": "1.0",
+    "permissions": [
+      "activeTab",
+      "tabs",
+      "storage",
+      "identity"
+    ],
+    "host_permissions": [
+      "https://api.spotify.com/*",
+      "https://accounts.spotify.com/*"
+    ],
+    "content_security_policy": {
+      "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://accounts.spotify.com https://api.spotify.com;"
+    },
+    "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["<all_urls>"],
+        "js": ["content.js"]
+      }
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    }
+}
+  
