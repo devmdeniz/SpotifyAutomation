@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "Ses Tespiti Eklentisi",
-    "description": "Chrome'dan ses çalınıp çalınmadığını tespit eder.",
+    "name": "Spotify Voice Control Extension",
+    "description": "Detects if Spotify is playing and controls the volume of Spotify.",
     "version": "1.0",
     "permissions": [
       "activeTab",
@@ -16,6 +16,10 @@
     "content_security_policy": {
       "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://accounts.spotify.com https://api.spotify.com;"
     },
+    "web_accessible_resources": [{
+      "resources": ["config.json"],
+      "matches": ["<all_urls>"]
+    }],
     "background": {
       "service_worker": "background.js"
     },

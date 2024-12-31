@@ -42,26 +42,31 @@ pip install -r requirements.txt
 2. Create a new application
 3. Add `http://localhost:5000/callback` to Redirect URIs
 4. Copy your Client ID and Client Secret
-5. Create `.env` file from template:
+5. Create `config.json` file with the following content:
 
-`bash
-cp .env.example .env
-`
-
-6. Fill in your Spotify credentials in `.env`:
-
-`bash
-SPOTIFY_CLIENT_ID=your_client_id
-SPOTIFY_CLIENT_SECRET=your_client_secret
-`
+```json
+{
+    "SPOTIFY_CLIENT_ID": "your_client_id",
+    "SPOTIFY_CLIENT_SECRET": "your_client_secret",
+    "REDIRECT_URI": "http://localhost:5000/callback"
+}
+```
 
 ### Step 4: Start Authentication Server
 ```bash
 python spotify_auth_server.py
 ```
 this step is one time only. When you run this step, you will be redirected to Spotify authorization page. After you authorize the application, you will be redirected to `http://localhost:5000/callback` and you will see your access token and refresh token.
-When you see your access token and refresh token, write them to `.env` file.
+When you see your access token and refresh token, add them to your `config.json` file:
 
+```json
+{
+    "SPOTIFY_CLIENT_ID": "your_client_id",
+    "SPOTIFY_CLIENT_SECRET": "your_client_secret",
+    "REDIRECT_URI": "http://localhost:5000/callback",
+    "SPOTIFY_REFRESH_TOKEN": "your_refresh_token"
+}
+```
 
 ### Step 5: Load Extension in Chrome
 1. Open Chrome and navigate to `chrome://extensions/`

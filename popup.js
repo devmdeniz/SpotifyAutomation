@@ -25,56 +25,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         volumeValue.textContent = `${volume}%`;
         await chrome.storage.local.set({ spotify_volume: volume });
         
-        // Notify active tab about new volume level
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    action: "updateVolume",
-                    volume: volume
-                }).catch(err => console.log('Tab message error:', err));
-            }
+        // Send volume command to background script
+        chrome.runtime.sendMessage({
+            action: 'spotifyCommand',
+            command: 'setVolume',
+            params: { volume: volume }
         });
     });
 
     loginButton.addEventListener('click', async () => {
-        console.log('Button clicked');
-        statusDiv.textContent = 'Connecting...';
-        
         try {
-            // Get token from storage
-            const { spotify_token, token_expiry } = await chrome.storage.local.get(['spotify_token', 'token_expiry']);
+            // Get token from background script
+            const response = await chrome.runtime.sendMessage({ action: 'getSpotifyToken' });
             
-            if (!spotify_token || Date.now() > token_expiry) {
-                throw new Error('Token is invalid or expired');
+            if (!response || !response.token) {
+                // If no token, try to refresh using stored refresh token
+                chrome.runtime.sendMessage({ action: 'refreshSpotifyToken' });
+                statusDiv.textContent = 'Attempting to refresh token...';
+                return;
             }
 
-            // Send token to content script if valid
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if (tabs[0]) {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        action: "refreshSpotify",
-                        token: spotify_token
-                    }).catch(err => console.log('Tab message error:', err));
+            // Test token validity with a simple Spotify API call
+            const testResponse = await fetch('https://api.spotify.com/v1/me', {
+                headers: {
+                    'Authorization': `Bearer ${response.token}`
                 }
             });
 
+            if (!testResponse.ok) {
+                // Token might be expired, try refreshing
+                chrome.runtime.sendMessage({ action: 'refreshSpotifyToken' });
+                throw new Error('Token needs refresh');
+            }
+
             statusDiv.textContent = 'Connection successful!';
             volumeControl.classList.add('active'); // Show volume control
+            loginButton.textContent = 'Reconnect';
         } catch (error) {
-            console.error('Operation error:', error);
-            statusDiv.textContent = 'Connection error: ' + error.message;
+            console.error('Error:', error);
+            statusDiv.textContent = 'Connection failed. Please try again.';
+            loginButton.textContent = 'Retry Connection';
         }
     });
 
-    // Check token status when page loads
+    // Check connection status when popup opens
     try {
-        const { spotify_token, token_expiry } = await chrome.storage.local.get(['spotify_token', 'token_expiry']);
-        if (spotify_token && Date.now() < token_expiry) {
-            statusDiv.textContent = 'Connection active';
-            loginButton.textContent = 'Reconnect';
-            volumeControl.classList.add('active'); // Show volume control
+        const response = await chrome.runtime.sendMessage({ action: 'getSpotifyToken' });
+        if (response && response.token) {
+            const testResponse = await fetch('https://api.spotify.com/v1/me', {
+                headers: {
+                    'Authorization': `Bearer ${response.token}`
+                }
+            });
+
+            if (testResponse.ok) {
+                statusDiv.textContent = 'Connection active';
+                loginButton.textContent = 'Reconnect';
+                volumeControl.classList.add('active');
+            } else {
+                // Token might be expired, try refreshing
+                chrome.runtime.sendMessage({ action: 'refreshSpotifyToken' });
+                statusDiv.textContent = 'Please login again';
+                loginButton.textContent = 'Login';
+            }
         }
     } catch (error) {
         console.error('Token status check error:', error);
+        statusDiv.textContent = 'Please login to connect';
+        loginButton.textContent = 'Login';
     }
 }); 
